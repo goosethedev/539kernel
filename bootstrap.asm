@@ -21,6 +21,7 @@ start:
 
 
 ; load the kernel at 0x9000 (div by 16 for physical addr)
+;
 load_kernel_from_disk:
     ; calculate the offset in memory of the current sector in bx
     mov ax, [curr_sector_to_load]
