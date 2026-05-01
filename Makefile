@@ -1,13 +1,20 @@
-ASM = nasm
-BOOTSTRAP_FILE = bootstrap.asm
-KERNEL_FILE = simple_kernel.asm
+ASM=nasm
+CC=gcc
+BOOTSTRAP_FILE=bootstrap.asm
+INIT_KERNEL_FILES=starter.asm
+KERNEL_FILES=main.c
+KERNEL_FLAGS=-Wall -m32 -c -ffreestanding -fno-asynchronous-unwind-tables -fno-pie
 
-build: $(BOOTSTRAP_FILE) $(KERNEL_FILE)
+build: $(BOOTSTRAP_FILE) $(KERNEL_FILES)
 	$(ASM) -f bin $(BOOTSTRAP_FILE) -o bootstrap.o
-	$(ASM) -f bin $(KERNEL_FILE) -o kernel.o
+	$(ASM) -f elf32 $(INIT_KERNEL_FILES) -o starter.o
+	$(CC) $(KERNEL_FLAGS) $(KERNEL_FILES) -o kernel.elf
+	ld -melf_i386 -Tlinker.ld starter.o kernel.elf -o 539kernel.elf
+	objcopy -O binary 539kernel.elf 539kernel.bin
 	dd if=bootstrap.o of=kernel.img
-	dd seek=1 if=kernel.o of=kernel.img bs=512
+	dd seek=1 conv=sync if=539kernel.bin of=kernel.img bs=512 count=5
+	dd seek=6 conv=sync if=/dev/zero of=kernel.img bs=512 count=2046
 	qemu-system-x86_64 -s -drive format=raw,file=kernel.img
 
 clean:
-	rm -f *.o *.img
+	rm -f *.o *.elf *.bin *.img
