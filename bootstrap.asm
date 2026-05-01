@@ -20,22 +20,36 @@ start:
     jmp 0x0500:0000
 
 
-; load the kernel at 0x0500 (small but ok for this stage)
+; load the kernel at 0x9000 (div by 16 for physical addr)
+;
 load_kernel_from_disk:
-    mov ax, 0x0500
+    ; calculate the offset in memory of the current sector in bx
+    mov ax, [curr_sector_to_load]
+    sub ax, 2
+    mov bx, 512
+    mul bx
+    mov bx, ax
+
+    mov ax, 0x0900
     mov es, ax
 
     ; execute BIOS service 13h:02h (read from hard-disk)
     mov ah, 02h     ; load BIOS service
     mov al, 01h     ; read only one sector
     mov ch, 0h      ; hdd track we want to read (track 0)
-    mov cl, 02h     ; sector to read (second)
+    mov cl, [curr_sector_to_load]     ; sector to read from disk
     mov dh, 0h      ; head number (platter head on old hard-disks)
     mov dl, 80h     ; type of disk to read (0h=floppy, 80h=hdd0)
-    mov bx, 0h      ; offset to the starting point (zero)
     int 13h         ; bios hard-disk service category
 
     jc kernel_load_error    ; check carry flag (1 if errored)
+
+    ; load next sector if available
+    sub byte [number_of_sectors_to_load], 1
+    add byte [curr_sector_to_load], 1
+    cmp byte [number_of_sectors_to_load], 0
+
+    jne load_kernel_from_disk
 
     ret
 
@@ -73,6 +87,8 @@ print_finished:
 
 title_str       db "BOOTLOADER: loading 539kernel...", 0
 load_error_str  db "BOOTLOADER: ERROR! the kernel failed to load", 0
+number_of_sectors_to_load   db 15d
+curr_sector_to_load         db 2d
 
 ; pad with zeros until addr 510
 ; 510 - (addr of cur line - addr of cur section (start))
