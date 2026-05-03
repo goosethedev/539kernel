@@ -10,4 +10,4 @@ build: $(BOOTSTRAP_FILE) $(KERNEL_FILE)
 	qemu-system-x86_64 -s -drive format=raw,file=kernel.img
 
 clean:
-	rm -f *.o *.img
+	rm -f *.o *.img *.bin *.elf

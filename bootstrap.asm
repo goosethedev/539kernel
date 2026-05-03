@@ -1,21 +1,28 @@
-start:
-    ; load bootloader at known BIOS address 0x07C00
-    ; physical addr (real-mode) = segment * 16 + offset
-    mov ax, 0x07C0
-    mov ds, ax
+[bits 16]       ; emit 16-bit code (real-mode)
+[org 0x7C00]    ; offset all addresses to this starting point
 
-    ; welcome string
+start:
+    ; setup a clean environment
+    cli                 ; disable BIOS interruptions while setting up
+    xor ax, ax          ; zero-out ax
+    mov ds, ax          ; clear data segment
+    mov es, ax          ; clear extra segment
+    mov ss, ax          ; clear stack segment
+    mov sp, 0x7C00      ; grow stack pointer below our code (sp decreases)
+    sti                 ; re-enable interrupts
+
+    ; print bootloader welcome string
     mov si, title_str
     call print_str
 
     ; load kernel and execute it
     call load_kernel_from_disk
-    jmp 0x0900:0000
+    jmp 0x0500:0000
 
 
-; load the kernel at 0x9000 (div by 16 for physical addr)
+; load the kernel at 0x0500 (small but ok for this stage
 load_kernel_from_disk:
-    mov ax, 0x0900
+    mov ax, 0x0500
     mov es, ax
 
     ; execute BIOS service 13h:02h (read from hard-disk)
@@ -64,7 +71,7 @@ print_finished:
 
     ret
 
-title_str       db "BOOTLOADER: loading 539 kernel...", 0
+title_str       db "BOOTLOADER: loading 539kernel...", 0
 load_error_str  db "BOOTLOADER: ERROR! the kernel failed to load", 0
 
 ; pad with zeros until addr 510
