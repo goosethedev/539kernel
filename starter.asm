@@ -5,12 +5,12 @@
 ; - switch to protected mode
 ; - setup interrupts
 
-bits 16                 ; because we're compiling to elf32
+[bits 16]               ; because we're compiling to elf32
 extern kernel_main      ; tell the linker to link these functions
 extern interrupt_handler
 
 start:
-    ; set the data segment to the current one
+    ; set the data segment to the current address
     mov ax, cs
     mov ds, ax
 
@@ -32,7 +32,7 @@ init_video_mode:
                         ;             13h (graphics mode 320x200, 256 colors)
     int 10h
 
-    mov ah, 1h           ; service 1 -> set text cursor service
+    mov ah, 1h          ; service 1 -> set text cursor service
     mov cx, 2000h       ; cursor: 2000h -> cursor disabled (no text input allowed)
     int 10h
 
@@ -52,8 +52,8 @@ setup_interrupts:
 remap_pic:
     ; make PICs start initialization command
     mov al, 11h
-    out 0x20, al         ; send init cmd to pic master
-    out 0xa0, al         ; send init cmd to pic slave
+    out 0x20, al        ; send init cmd to pic master
+    out 0xa0, al        ; send init cmd to pic slave
 
     ; first arg: offsets
     mov al, 32d         ; master irq offset at 32 (8 values)
@@ -62,9 +62,9 @@ remap_pic:
     out 0xa1, al
 
     ; second arg: master-slave connection port
-    mov al, 0100b          ; bit 2 from right (0-index) = IQR2
+    mov al, 0100b       ; bit 2 from right (0-index) = IQR2
     out 0x21, al
-    mov al, 2h             ; "connected to IQR2 on master"
+    mov al, 2h          ; "connected to IQR2 on master"
     out 0xa1, al
 
     ; third arg: use x86 mode
@@ -85,7 +85,7 @@ load_idt:
 
 
 ; must use 32-bit and segment selectors, since we're on protected mode
-bits 32
+[bits 32]
 start_kernel:
     mov eax, 10h        ; points to kernel_data_descriptor
     mov ds, eax

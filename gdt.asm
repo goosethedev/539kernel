@@ -6,5 +6,5 @@ gdt:
     userspace_data_descriptor   :   dw 0xffff, 0, 0xf200, 0x0cf
 
 gdtr:
-    gdt_size_in_bytes   :   dw (5*8)
-    gdt_base_address    :   dd gdt
+    gdt_size_in_bytes   :   dw (5*8)    ; gdt limit (2 bytes)
+    gdt_base_address    :   dd gdt      ; gdt base (4 bytes)
