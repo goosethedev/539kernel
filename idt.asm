@@ -2,10 +2,15 @@
 %rep 49
 isr_%+i:
     cli
-    push    i
+; handle system interrupts
 %if i < 32
+    push    i
     jmp     isr_basic
+; handle system timer for context switching
+%elif i = 32
+    jmp     timer_handler
 %else
+    push    i
     jmp     irq_basic
 %endif
 %assign i i+1
@@ -15,6 +20,22 @@ isr_basic:
 	call interrupt_handler
 	pop eax
     sti
+	iret
+
+timer_handler:
+    pusha           ; push all register values to the stack
+                    ; eax, ecx, edx, ebx, esp, ebp, esi, edi
+
+    mov eax, [esp + 32]     ; push the eip value
+    push eax
+
+    call context_switch
+
+    mov al, 0x20    ; issue EOI to master PIC for all IQRs
+	out 0x20, al
+
+	add esp, 40d    ; clean up pushed values by advancing the sp
+	push run_next_process
 	iret
 
 irq_basic:

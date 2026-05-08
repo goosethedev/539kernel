@@ -4,10 +4,13 @@
 ; - setup video mode for VGA usage
 ; - switch to protected mode
 ; - setup interrupts
+; - create and load the TSS
 
 [bits 16]               ; because we're compiling to elf32
 extern kernel_main      ; tell the linker to link these functions
 extern interrupt_handler
+extern context_switch
+extern run_next_process
 
 start:
     ; set the data segment to the current address
@@ -18,6 +21,7 @@ start:
     call init_video_mode
     call enter_protected_mode
     call setup_interrupts
+    call load_task_register
 
     call 0x08:start_kernel   ; far jump to kernel_code_descriptor
 
@@ -83,6 +87,10 @@ load_idt:
     lidt [idtr - start]
     ret
 
+load_task_register:
+    mov ax, 40d         ; index of TSS in GDT = (6 * 8) - 8
+    ltr ax
+    ret
 
 ; must use 32-bit and segment selectors, since we're on protected mode
 [bits 32]
@@ -102,3 +110,6 @@ start_kernel:
 
 %include "gdt.asm"
 %include "idt.asm"
+
+tss:
+    dd 0

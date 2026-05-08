@@ -14,7 +14,7 @@ void printchar(char ch) {
 }
 
 void print(char *str) {
-    while(*str != '\0')
+    while (*str != '\0')
         printchar(*str++);
 }
 
@@ -25,7 +25,6 @@ void println() {
 }
 
 void printi(int num) {
-    if (num <= 0) return;
-    printi(num / 10);
+    if (num >= 10) printi(num / 10);
     printchar('0' + (num % 10));
 }
